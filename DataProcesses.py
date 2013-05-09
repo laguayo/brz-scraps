@@ -61,12 +61,15 @@ class StoreDealers(webapp2.RequestHandler):
 		dealer.name = self.request.get('name')
 		dealer.addr = self.request.get('addr')
 		dealer.phone =self.request.get('phone')
+		dealer.url = url
 		dealer.put()
+		logging.info("Saved dealer %s", dealer.name)
+		return 
 class ParseDealer(webapp2.RequestHandler):
 	def get(self):
 		self.response.headers['Content-Type'] = 'text/plain'
 		if self.request.get('tasks'):
-			taskqueue.add(url='/cars', params = {})
+			taskqueue.add(queue_name='carparse', url='/cars', params = {})
 			self.response.write("Started off saving dealer cars")
 		else:
 			self.response.write('Nothing to see here')
@@ -76,7 +79,7 @@ class ParseDealersTask(webapp2.RequestHandler):
 	def post(self):
 		dealers = Dealer.all()
 		for dealer in dealers:
-			logging.info('Parsing Dealer: %s', dKey)
+			logging.info('Parsing Dealer: %s', dealer.name)
 			old_keys = set(dealer.cars)
 			car_keys = self.get_url(dealer.url)
 			self.invalidate_old(car_keys, old_keys)
@@ -101,11 +104,13 @@ class ParseDealersTask(webapp2.RequestHandler):
 				car.invalid = True
 				car.put()
 	def get_url(self, url):
-		if url == None or url == '':
-			url = self.url
 		logging.info('Getting url: %s',url)
+		if 'BRZ' not in url:
+			brz_url = url + StoreDealers.inventoryString + StoreDealers.modelParam
+		else:
+			brz_url = url
 		try:
-			page = urllib2.urlopen(url).read()
+			page = urllib2.urlopen(brz_url).read()
 			soup = BeautifulSoup(page, from_encoding="UTF-8")
 			cars = soup.find_all("li", class_="inv-type-new")
 			logging.info('Found %s cars',len(cars))
@@ -151,7 +156,6 @@ class ParseDealersTask(webapp2.RequestHandler):
 		return
 	def store_car(self, car):
 		dealer = Dealer.get(car.dealer.key())
-		
 		car.put()
 		if dealer != None:
 			if car.key() not in set(dealer.cars):

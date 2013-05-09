@@ -16,6 +16,14 @@ JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)))
 
 class StoreAuthUsers(webapp2.RequestHandler):
+	def is_user_auth(self, email):
+		q = db.GqlQuery("SELECT * FROM UserPref WHERE email = :1", email)
+		user_pref = q.get()
+		logging.info("User %s visited", user_pref.email)
+		if user_pref != None:
+			return not user_pref.block
+		else:
+			return False
 	def put_auth_user(self, name, email):
 		new_user = UserPref(name=name, 
 							email=email, block=False, key_name=email)
@@ -32,22 +40,28 @@ class StoreAuthUsers(webapp2.RequestHandler):
 		return
 class NewDealerForm(webapp2.RequestHandler):
 	def get(self):
+		user = users.get_current_user()
+		if not user:
+			self.redirect(users.create_login_url(self.request.uri))
+		if user:
+			if StoreAuthUsers().is_user_auth(user.email()):
+				template = JINJA_ENVIRONMENT.get_template('dealer_form.html')
+				self.response.write(template.render())
+			else:
+				logging.info('Blocked user %s ',user.email())
+				self.response.headers['Content-Type'] = 'text/plain'
+				self.response.write("Hello Subaru World")
+		else:
+			self.redirect(users.create_login_url(self.request.uri))
 		return
 class MainHandler(webapp2.RequestHandler):
-	def is_user_auth(self, email):
-		q = db.GqlQuery("SELECT * FROM UserPref WHERE email = :1", email)
-		user_pref = q.get()
-		logging.info("User %s visited", user_pref.email)
-		if user_pref != None:
-			return not user_pref.block
-		else:
-			return False
+	
 	def get(self):
 		user = users.get_current_user()
 		if not user:
 			self.redirect(users.create_login_url(self.request.uri))
 		if user:
-			if self.is_user_auth(user.email()):
+			if StoreAuthUsers().is_user_auth(user.email()):
 				sort = self.request.get('sort')
 				if sort:
 					cars = Car.all().order(sort).fetch(100)
@@ -67,5 +81,6 @@ app = webapp2.WSGIApplication([('/', MainHandler),
 								('/users', StoreAuthUsers),
 								('/dealers', StoreDealers),
 								('/cars', ParseDealersTask),
-								('/carsStart', ParseDealer)],
+								('/carsStart', ParseDealer),
+								('/dealer', NewDealerForm)],
                               debug=True)

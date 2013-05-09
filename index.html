@@ -1,16 +1,6 @@
-<html>
-  <head>
-    <link href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.0/css/bootstrap-combined.min.css" rel="stylesheet">
-    </head>
-  <body>
-     <div class='navbar navbar-inverse'>
-      <div class='navbar-inner' style="height: auto;">
-        <ul class="nav">
-          <li class="brand active"><a href="/">Subaru BRZ Scraper</a></li>
-        </ul>
-      </div>
-    </div>
-    <div class="container">
+{% extends "layout.html" %}
+{% block content %}
+ <div class="container" style="height:600px; overflow:auto">
       <table class="table table-striped table-bordered table-hover table-condensed" id="car_table">
         <tr>
           <!-- <th></th> -->
@@ -36,5 +26,4 @@
       {% endfor %}
     </table>
   </div>
-  </body>
-</html>
+{% endblock %}
