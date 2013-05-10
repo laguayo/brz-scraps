@@ -64,16 +64,14 @@ class StoreDealers(webapp2.RequestHandler):
 		dealer.url = url
 		dealer.put()
 		logging.info("Saved dealer %s", dealer.name)
-		return 
+		self.redirect('/dealer/list')
 class ParseDealer(webapp2.RequestHandler):
 	def get(self):
-		self.response.headers['Content-Type'] = 'text/plain'
-		if self.request.get('tasks'):
-			taskqueue.add(queue_name='carparse', url='/cars', params = {})
-			self.response.write("Started off saving dealer cars")
-		else:
-			self.response.write('Nothing to see here')
-#url = /cars
+		taskqueue.add(queue_name='carparse', url='/dealer/parse', params = {})
+		return
+app = webapp2.WSGIApplication([('/task/cars', ParseDealer)],debug=True)
+
+#url = /dealer/parse/*
 class ParseDealersTask(webapp2.RequestHandler):
 	#post will result in starting a task across all dealers
 	def post(self):
@@ -85,9 +83,9 @@ class ParseDealersTask(webapp2.RequestHandler):
 			self.invalidate_old(car_keys, old_keys)
 		return
 	#get will process one dealer in key based on dealer name
-	def get(self):
+	def get(self, name):
 		self.response.headers['Content-Type'] = 'text/plain'
-		name = self.request.get('name')
+		# name = self.request.get('name')
 		dealer = Dealer.gql('WHERE name = :1', name).get()
 		if dealer != None:
 			logging.info('Dealer %s', dealer.name)

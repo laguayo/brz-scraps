@@ -1,0 +1,4 @@
+cron:
+- description: hourly scrape job
+  url: /task/cars
+  schedule: every 2 hours

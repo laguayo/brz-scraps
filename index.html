@@ -1,6 +1,10 @@
 {% extends "layout.html" %}
+{% set active_page = "index" %}
+{% block title %}
+Car List
+{% endblock %}
 {% block content %}
- <div class="container" style="height:600px; overflow:auto">
+ <div>
       <table class="table table-striped table-bordered table-hover table-condensed" id="car_table">
         <tr>
           <!-- <th></th> -->
@@ -13,7 +17,7 @@
           <th><a href="/?sort=last_date">Date</a></th>
         </tr>
       {% for car in cars %}
-        <tr{% if 'White' in car.ex_color and  'Automatic' in car.transmission%} class="success" {% elif car.invalidate %} class="error"{% endif %}>
+        <tr{% if 'White' in car.ex_color and  'Automatic' in car.transmission%} class="success" {% elif car.invalid %} class="error"{% endif %}>
          <!--  <td><a href={{ car.dealer.key().name().replace('/new-inventory/index.htm?model=BRZ&', '') + car.link }}><img src={{ car.img_src }}></a></td> -->
           <td><a href={{ car.dealer.key().name().replace('/new-inventory/index.htm?model=BRZ&', '') + car.link }}>{{ car.vin }}</a></td>
           <td>{{ car.model }}</td>

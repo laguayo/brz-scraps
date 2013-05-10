@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% set active_page = 'dealers' %}
+{% block title %}
+Dealer List
+{% endblock %}
+{% block content %}
+ <div>
+      <table class="table table-striped table-bordered table-hover" id="dealer_list">
+        <tr>
+          <th><a href="/?sort=name">Name</a></th>
+          <th><a href="/?sort=url">URL</a></th>
+          <th><a href="/?sort=phone">Phone</a></th>
+          <th><a href="/?sort=address">Address</a></th>
+          <th><a href="/?sort=area">Area</a></th>
+          <th><a href="/?sort=cars"># of Cars</a></th>
+          <th hidden="true">key</th>
+        </tr>
+      {% for d in dealers %}
+        <tr>
+          <td><a href="{% if d.name %} /dealer/edit/{{ d.name }} {% endif %}">{{ d.name }}<a></td>
+          <td>{{ d.url.replace('/new-inventory/index.htm?model=BRZ&', '')  }}</td>
+          <td>{{ d.phone }}</td>
+          <td>{{ d.address }}</td>  
+          <td>{{ d.area }}</td>
+          <td><a style="text-decoration: none; color:#333;" href="{% if d.name %} /dealer/parse/{{ d.name }} {% endif %}">{{ d.cars | length }}<a></td>
+          <td hidden="true">{{ d.key() }}</td>
+        </tr>
+      {% endfor %}
+    </table>
+    <div class="center"><a class="btn btn-inverse btn-mini"href="/dealer/new/1"><i class="icon-plus icon-white"></i> Add Dealer</a>
+  </div>
+  </div>
+{% endblock %}

@@ -1,31 +1,44 @@
 {% extends "layout.html" %}
+{% block title %}
+Dealer Form
+{% endblock %}
 {% block content %}
-<form action="/dealers" method="post">
+<form class="form-horizontal" action="/dealer/save" method="post">
   <fieldset>
     <legend>Dealer Info</legend>
-    <div class="row">
-      <div class="span4">
-        <label>Name</label>
-    
-          <input name="name"type="text" placeholder="Capitol Subaru Sj">
-      </div>
-      <div class="span4">
-        <label>URL</label>
-        <input class="input-large" name="url" type="text" placeholder="http://captiol...">
-        </div
+    <div class="control-group">
+        <label class="control-label" for="name">Name</label> 
+      <div class="controls">
+          <input id="name" name="name"type="text" placeholder="Capitol Subaru Sj" {% if d.name %} value="{{ d.name }}"{% endif %}>
       </div>
     </div>
-    <div class="row">
-      <div class="span4">
-        <label>Address</label> <input class="input-large" name="addr" type="text" placeholder="5600 Capitol...">
-      </div>
-      <div class="span4">
-        <label>Phone</label><input name="phone" type="text" placeholder="408-123-1234">
+    <div class="control-group">
+      <label class="control-label" for="url">URL</label>
+      <div class="controls">
+          <input id="url" name="url" type="text" placeholder="http://capitol..."{% if d.url %} value="{{ d.url }}"{% endif %}>
       </div>
     </div>
-     <div class="row">
-      <div class="span4">
-      <button type="submit" class="btn">Submit</button>
+    <div class="control-group">
+      <label class="control-label" for="addr">Address</label>
+      <div class="controls">
+        <input id="addr" name="addr" type="text" placeholder="5600 Capitol..." {% if d.address %} value="{{ d.address }}"{% endif %}>
+      </div>
+    </div>
+    <div class="control-group">
+      <label class="control-label" for="area">Area</label>
+      <div class="controls">
+        <input id="area" name="area" type="text" placeholder="Bay Area" {% if d.address %} value="{{ d.area }}"{% endif %}>
+      </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label" for="phone">Phone</label>
+        <div class="controls">
+          <input id="phone" name="phone" type="tel" placeholder="408-123-1234" {% if d.phone %} value="{{ d.phone }}"{% endif %}>
+        </div>
+    </div>
+    <div class="control-group">
+      <div class="controls">
+        <button type="submit" class="btn">Submit</button>
       </div>
     </div>
   </fieldset>

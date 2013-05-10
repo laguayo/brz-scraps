@@ -6,6 +6,7 @@ class Dealer(db.Model):
 	address = db.PostalAddressProperty()
 	phone = db.PhoneNumberProperty()
 	cars = db.ListProperty(db.Key)
+	area = db.StringProperty()
 
 class Car(db.Model):
 	model = db.StringProperty()
