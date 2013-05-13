@@ -58,29 +58,30 @@ class StoreDealers(webapp2.RequestHandler):
 	def post(self):
 		url = self.request.get('url')
 		dealer = Dealer(key_name=url)
-		dealer.name = self.request.get('name')
-		dealer.addr = self.request.get('addr')
-		dealer.phone =self.request.get('phone')
+		if self.request.get('name'):
+			dealer.name = self.request.get('name')
+		if self.request.get('addr'):
+			dealer.address = self.request.get('addr')
+		if self.request.get('phone'):
+			dealer.phone = self.request.get('phone')
+		if self.request.get('area'):
+			dealer.area = self.request.get('area')
 		dealer.url = url
-		dealer.put()
-		logging.info("Saved dealer %s", dealer.name)
-		self.redirect('/dealer/list')
+		if dealer.put():	
+			logging.info("Saved dealer %s", dealer.name)
+			self.redirect('/dealer/list/1')
 class ParseDealer(webapp2.RequestHandler):
 	def get(self):
-		taskqueue.add(queue_name='carparse', url='/dealer/parse', params = {})
+		taskqueue.add(queue_name='carparse', url='/dealer/parse/1', params = {})
 		return
-app = webapp2.WSGIApplication([('/task/cars', ParseDealer)],debug=True)
-
 #url = /dealer/parse/*
 class ParseDealersTask(webapp2.RequestHandler):
 	#post will result in starting a task across all dealers
-	def post(self):
+	def post(self, empty):
 		dealers = Dealer.all()
 		for dealer in dealers:
 			logging.info('Parsing Dealer: %s', dealer.name)
-			old_keys = set(dealer.cars)
-			car_keys = self.get_url(dealer.url)
-			self.invalidate_old(car_keys, old_keys)
+			self.get_url(dealer.url, dealer)
 		return
 	#get will process one dealer in key based on dealer name
 	def get(self, name):
@@ -90,63 +91,86 @@ class ParseDealersTask(webapp2.RequestHandler):
 		if dealer != None:
 			logging.info('Dealer %s', dealer.name)
 			url = dealer.url
-			self.get_url(url)
+			self.get_url(url, dealer)
 			self.response.write('Started Parsing Dealer ' + dealer.name)
 		else:
 			self.response.write('Dealer not found ' + name)
 		return
 	def invalidate_old(self, cars, old_keys):
-		for k in old_keys:
+		for k in set(old_keys):
 			if k not in cars:
 				car = Car.get(k)
-				car.invalid = True
-				car.put()
-	def get_url(self, url):
+				if car.invalid != True:
+					car.invalid = True
+					logging.info("Invalidated car %s", car.key())
+					car.put()
+			else:
+				cars.remove(k)
+		return list(cars)
+	def get_url(self, url, dealer):
 		logging.info('Getting url: %s',url)
 		if 'BRZ' not in url:
 			brz_url = url + StoreDealers.inventoryString + StoreDealers.modelParam
 		else:
 			brz_url = url
+		car_set = set()
 		try:
 			page = urllib2.urlopen(brz_url).read()
 			soup = BeautifulSoup(page, from_encoding="UTF-8")
 			cars = soup.find_all("li", class_="inv-type-new")
 			logging.info('Found %s cars',len(cars))
-			car_set = set()
 			for car_html in cars:
 				car_set.add(self.parse_car(car_html, url))
-			return car_set
 		except urllib2.URLError, e:
 			 logging.error(e)
+		old_keys = set(dealer.cars)
+		new_keys = self.invalidate_old(car_set, old_keys)
+		if len(new_keys) > 0:
+			logging.info("Saving New Keys %s", new_keys)
+			dealer.cars 
+			dealer.put()
+		return
 	def parse_car(self, car_str, url):
 		try:
 			vin = unicode(car_str.find(class_='hproduct').attrs['data-vin'])
 			c = Car(key_name=vin, vin=vin)
+			check_car = Car.get(c.key())
+			if check_car:
+				logging.info("Car already exist in db: %s", c.vin)
+				return c.key()
 			media = car_str.find(class_='media')
 			c.model = unicode(car_str.find(class_='url').string)
 			c.price = self.get_price(car_str.find_all(class_='value'))
 			c.link = unicode(media.a.attrs['href'])
 			c.img_src = unicode(media.img.attrs['src'])
 			try:
-				description = car_str.find(class_='description').text.replace('\n','')
-				desc_dict = dict(e.split(':') for e in description.split(','))
+				desc = car_str.find(class_='description')
+				desc_dict = dict()
+				# desc_dict = dict(e.split(':') for e in description.split(','))
+				k = ''
+				for s in desc.dl.stripped_strings:
+					if (',' not in s) and ('More' not in s) and (u'\u2026' not in s):
+						if ':' in s:
+							k = s.replace(':','')
+						else:
+							desc_dict[k] = s
 			except (ValueError, TypeError):
-				logging.error('Error Parsing Car line Description %s \te = %s', car_str)
+				logging.error('Error Parsing Car line Description %s ', car_str.find(class_='description'))
 				return
 			logging.info('Car Description dict %s', desc_dict)
 			
-			c.transmission = unicode(desc_dict[' Transmission'])
-			c.ex_color = unicode(desc_dict[' Exterior Color'])
-			c.int_color = unicode(desc_dict[' Interior Color'])
-			c.model_type = unicode(desc_dict[' Model Code'])
-			if ' Stock #' in desc_dict:
-				c.stock_num = desc_dict[' Stock #']
+			c.transmission = unicode(desc_dict['Transmission'])
+			c.ex_color = unicode(desc_dict['Exterior Color'])
+			c.int_color = unicode(desc_dict['Interior Color'])
+			if 'Mode Code' in desc_dict:
+				c.model_type = unicode(desc_dict['Model Code'])
+			if 'Stock #' in desc_dict:
+				c.stock_num = unicode(desc_dict['Stock #'])
 			if 'Limit' in c.model:
 				c.trim = 'Limited'
 			else:
 				c.trim = 'Premium'
 			c.dealer = Dealer.gql('WHERE url = :1 ', url).get().key()
-			c.key_name = c.vin
 			self.store_car(c)
 			return c.key()
 		except AttributeError, e:

@@ -3,22 +3,41 @@
 {% block title %}
 Dealer List
 {% endblock %}
+{% block extrajs %}
+  <link type="text/css" href="/static/css/my_tables.css" rel="stylesheet">
+  <script src="/static/js/jquery.dataTables.min.js"></script>
+  <script src="/static/js/my_data_table.js"></script>
+  <script type="text/javascript">
+      /* Table initialisation */
+      $(document).ready(function() {
+        $('#dealer_list').dataTable( {
+          "sDom": "<'row'<'span6'l><'span6'f>r>t<'row'<'span6'i><'span6'p>>",
+          "sPaginationType": "bootstrap",
+          "aaSorting": [[ 5, "desc" ]]
+        } );
+      } );
+    
+  </script>
+{% endblock %}
 {% block content %}
- <div>
-      <table class="table table-striped table-bordered table-hover" id="dealer_list">
+  <div>
+      <table class="table table-striped table-bordered table-condensed table-hover" id="dealer_list">
+        <thead>
         <tr>
-          <th><a href="/?sort=name">Name</a></th>
-          <th><a href="/?sort=url">URL</a></th>
-          <th><a href="/?sort=phone">Phone</a></th>
-          <th><a href="/?sort=address">Address</a></th>
-          <th><a href="/?sort=area">Area</a></th>
-          <th><a href="/?sort=cars"># of Cars</a></th>
+          <th><a href="#">Name</a></th>
+          <th><a href="#">URL</a></th>
+          <th><a href="#">Phone</a></th>
+          <th><a href="#">Address</a></th>
+          <th><a href="#">Area</a></th>
+          <th><a href="#">Cars</a></th>
           <th hidden="true">key</th>
         </tr>
+      </thead>
+      <tbody>
       {% for d in dealers %}
         <tr>
-          <td><a href="{% if d.name %} /dealer/edit/{{ d.name }} {% endif %}">{{ d.name }}<a></td>
-          <td>{{ d.url.replace('/new-inventory/index.htm?model=BRZ&', '')  }}</td>
+          <td><a title="Edit" href="{% if d.name %} /dealer/edit/{{ d.name }} {% endif %}">{{ d.name }}<a></td>
+          <td><a title="{{ d.name }}"href={{d.url}}>{{ d.url.replace('/new-inventory/index.htm?model=BRZ&', '')  }}</a></td>
           <td>{{ d.phone }}</td>
           <td>{{ d.address }}</td>  
           <td>{{ d.area }}</td>
@@ -26,8 +45,10 @@ Dealer List
           <td hidden="true">{{ d.key() }}</td>
         </tr>
       {% endfor %}
+    </tbody>
     </table>
-    <div class="center"><a class="btn btn-inverse btn-mini"href="/dealer/new/1"><i class="icon-plus icon-white"></i> Add Dealer</a>
-  </div>
+      <div class="row">
+        <div class="pull-right"><a class="btn btn-inverse"href="/dealer/new/1"><i class="icon-plus icon-white"></i> Add Dealer</a></div>
+      </div>
   </div>
 {% endblock %}

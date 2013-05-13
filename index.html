@@ -3,31 +3,54 @@
 {% block title %}
 Car List
 {% endblock %}
-{% block content %}
+{% block head %}
+<!-- <link type="text/css" href="/static/css/jquery.dataTables.css" rel="stylesheet"> -->
+{% endblock %}
+{% block extrajs %}
+  <link type="text/css" href="/static/css/my_tables.css" rel="stylesheet">
+  <script src="/static/js/jquery.dataTables.min.js"></script>
+  <script src="/static/js/my_data_table.js"></script>
+  <script type="text/javascript">
+      /* Table initialisation */
+      $(document).ready(function() {
+        $('#car_table').dataTable( {
+          "sDom": "<'row'<'span6'l><'span6'f>r>t<'row'<'span6'i><'span6'p>>",
+          "sPaginationType": "bootstrap",
+          "aaSorting": [[ 3, "asc" ]]
+        } );
+      } );   
+  </script>
+    {% endblock %}
+    {% block content %}
  <div>
-      <table class="table table-striped table-bordered table-hover table-condensed" id="car_table">
-        <tr>
+  <div class="row"><div class="span9"><p class="lead">Total Cars {{ cars | length }}</p></div></div>
+      <table class="table table-striped table-bordered table-hover table-condensed dataTable" id="car_table">
+        <thead>
+        <tr role="row">
           <!-- <th></th> -->
-          <th><a href="/?sort=vin">VIN</a></th>
-          <th><a href="/?sort=model">Model</a></th>
-          <th><a href="/?sort=price">Price</a></th>
-          <th><a href="/?sort=transmission">Tranny</a></th>
-          <th><a href="/?sort=ex_color">Color</a></th>
-          <th><a href="/?sort=dealer">Dealer</a></th>
-          <th><a href="/?sort=last_date">Date</a></th>
+          <th><a href="#">VIN</a></th>
+          <th><a href="#">Model</a></th>
+          <th><a href="#">Price</a></th>
+          <th><a href="#">Tranny</a></th>
+          <th><a href="#">Color</a></th>
+          <th><a href="#">Dealer</a></th>
+          <th><a href="#">Date</a></th>
         </tr>
+        </thead>
+      <tbody role="alert" aria-live="polite"  aria-relevant="all">
       {% for car in cars %}
-        <tr{% if 'White' in car.ex_color and  'Automatic' in car.transmission%} class="success" {% elif car.invalid %} class="error"{% endif %}>
+        <tr{% if'Automatic' in car.transmission%} class="success" {% elif car.invalid %} class="error"{% endif %}>
          <!--  <td><a href={{ car.dealer.key().name().replace('/new-inventory/index.htm?model=BRZ&', '') + car.link }}><img src={{ car.img_src }}></a></td> -->
           <td><a href={{ car.dealer.key().name().replace('/new-inventory/index.htm?model=BRZ&', '') + car.link }}>{{ car.vin }}</a></td>
           <td>{{ car.model }}</td>
-          <td>{{ car.price }}</td>
+          <td>${{ "{:,d}".format(car.price) }}</td>
           <td>{{ car.transmission }}</td>
           <td>{{ car.ex_color }}</td>
           <td>{{ car.dealer.key().name().replace('/new-inventory/index.htm?model=BRZ&', '') }}</td>
-          <td>{{ car.last_date }}</td>
+          <td style="font-size: 10px;">{{ car.local_date }}</td>
         </tr>
       {% endfor %}
+      </tbody>
     </table>
   </div>
 {% endblock %}

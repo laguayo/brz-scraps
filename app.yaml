@@ -17,7 +17,7 @@ handlers:
   upload: favicon\.ico
 
 - url: /task/cars
-  script: ParseDealer.app
+  script: main.app
   login: admin
 
 - url: /.*
