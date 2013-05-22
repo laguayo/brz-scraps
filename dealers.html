@@ -48,7 +48,9 @@ Dealer List
     </tbody>
     </table>
       <div class="row">
+        {% if 'Edit_Dealers' in user.permissions %}
         <div class="pull-right"><a class="btn btn-inverse"href="/dealer/new/1"><i class="icon-plus icon-white"></i> Add Dealer</a></div>
+        {%endif %}
       </div>
   </div>
 {% endblock %}

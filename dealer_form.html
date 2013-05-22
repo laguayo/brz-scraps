@@ -4,7 +4,7 @@ Dealer Form
 {% endblock %}
 {% block content %}
 <form class="form-horizontal" action="/dealer/save" method="post">
-  <fieldset>
+  <fieldset {% if 'Edit_Dealers' not in user.permissions %} disabled="true" {% endif %} >
     <legend>Dealer Info</legend>
     <div class="control-group">
         <label class="control-label" for="name">Name</label> 
@@ -36,11 +36,14 @@ Dealer Form
           <input id="phone" name="phone" type="tel" placeholder="408-123-1234" {% if d.phone %} value="{{ d.phone }}"{% endif %}>
         </div>
     </div>
+    {% if 'Edit_Dealers' in user.permissions %}
     <div class="control-group">
       <div class="controls">
+
         <button type="submit" class="btn">Submit</button>
       </div>
     </div>
+    {% endif %}
   </fieldset>
 </form>
 {% endblock %}

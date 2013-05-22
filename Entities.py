@@ -31,6 +31,7 @@ class UserPref(db.Model):
 	name = db.StringProperty()
 	email = db.StringProperty()
 	block = db.BooleanProperty()
+	permissions = db.StringListProperty()
 
 class Pacific_tzinfo(datetime.tzinfo):
     """Implementation of the Pacific timezone."""

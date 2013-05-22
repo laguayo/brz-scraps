@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+{% block title %}
+Dealer Form
+{% endblock %}
+{% block content %}
+<form class="form-horizontal" action="/users/save/1" method="post">
+  <fieldset>
+    <legend>User Info</legend>
+    <div class="control-group">
+        <label class="control-label" for="name">Name</label> 
+      <div class="controls">
+          <input id="name" name="name"type="text" placeholder="Ivan" {% if user.name %} value="{{ user.name }}"{% endif %}>
+      </div>
+    </div>
+    <div class="control-group">
+      <label class="control-label" for="email">Email</label>
+      <div class="controls">
+          <input id="email" name="email" type="text" placeholder="ivan@gmail.com"{% if user.email %} value="{{ user.email }}"{% endif %}>
+      </div>
+    </div>
+    <div class="control-group">
+      <label class="control-label" for="block">Block</label>
+      <div class="controls">
+        <input id="block" name="block" type="checkbox" {% if user.block %} value="{{ user.block }}"{% endif %}>
+      </div>
+    </div>
+    <div class="control-group">
+      <label class="control-label" for="permissions">Permissions</label>
+      <div class="controls">
+        <input id="permissions" name="permissions" type="text" placeholder="Edit_Dealers" {% if user.permissions %} value="{{ user.permissions }}"{% endif %}>
+      </div>
+    </div>
+      <div class="controls">
+        <button type="submit" class="btn">Submit</button>
+      </div>
+    </div>
+  </fieldset>
+</form>
+{% endblock %}

@@ -72,16 +72,23 @@ class StoreDealers(webapp2.RequestHandler):
 			self.redirect('/dealer/list/1')
 class ParseDealer(webapp2.RequestHandler):
 	def get(self):
-		taskqueue.add(queue_name='carparse', url='/dealer/parse/1', params = {})
+		if self.request.get('full'):
+			taskqueue.add(queue_name='carparse', url='/dealer/parse/1', params = {'invalidate_full' : True})
+		else:	
+			taskqueue.add(queue_name='carparse', url='/dealer/parse/1', params = {})
 		return
 #url = /dealer/parse/*
 class ParseDealersTask(webapp2.RequestHandler):
 	#post will result in starting a task across all dealers
 	def post(self, empty):
+		if self.request.get('invalidate_full'):
+			invalidate_full = True
+		else:
+			invalidate_full = False			
 		dealers = Dealer.all()
 		for dealer in dealers:
 			logging.info('Parsing Dealer: %s', dealer.name)
-			self.get_url(dealer.url, dealer)
+			self.get_url(dealer.url, dealer, invalidate_full)
 		return
 	#get will process one dealer in key based on dealer name
 	def get(self, name):
@@ -91,7 +98,7 @@ class ParseDealersTask(webapp2.RequestHandler):
 		if dealer != None:
 			logging.info('Dealer %s', dealer.name)
 			url = dealer.url
-			self.get_url(url, dealer)
+			self.get_url(url, dealer, False)
 			self.response.write('Started Parsing Dealer ' + dealer.name)
 		else:
 			self.response.write('Dealer not found ' + name)
@@ -107,7 +114,7 @@ class ParseDealersTask(webapp2.RequestHandler):
 			else:
 				cars.remove(k)
 		return list(cars)
-	def get_url(self, url, dealer):
+	def get_url(self, url, dealer, invalidate_full):
 		logging.info('Getting url: %s',url)
 		if 'BRZ' not in url:
 			brz_url = url + StoreDealers.inventoryString + StoreDealers.modelParam
@@ -123,7 +130,12 @@ class ParseDealersTask(webapp2.RequestHandler):
 				car_set.add(self.parse_car(car_html, url))
 		except urllib2.URLError, e:
 			 logging.error(e)
-		old_keys = set(dealer.cars)
+			 old_keys = set()
+		if invalidate_full == True:
+			lim = len(dealer.cars) * 1000
+			old_keys = db.GqlQuery("SELECT __key__ FROM Car WHERE dealer = :1", dealer.key()).run(keys_only=True, limit=lim)
+		else:
+			old_keys = set(dealer.cars)
 		new_keys = self.invalidate_old(car_set, old_keys)
 		if len(new_keys) > 0:
 			logging.info("Saving New Keys %s", new_keys)
@@ -158,10 +170,12 @@ class ParseDealersTask(webapp2.RequestHandler):
 				logging.error('Error Parsing Car line Description %s ', car_str.find(class_='description'))
 				return
 			logging.info('Car Description dict %s', desc_dict)
-			
-			c.transmission = unicode(desc_dict['Transmission'])
-			c.ex_color = unicode(desc_dict['Exterior Color'])
-			c.int_color = unicode(desc_dict['Interior Color'])
+			if 'Transmission' in desc_dict:
+				c.transmission = unicode(desc_dict['Transmission'])
+			if 'Exterior Color' in desc_dict:
+				c.ex_color = unicode(desc_dict['Exterior Color'])
+			if 'Interior Color' in desc_dict:
+				c.int_color = unicode(desc_dict['Interior Color'])
 			if 'Mode Code' in desc_dict:
 				c.model_type = unicode(desc_dict['Model Code'])
 			if 'Stock #' in desc_dict:

@@ -39,7 +39,7 @@ Car List
         </thead>
       <tbody role="alert" aria-live="polite"  aria-relevant="all">
       {% for car in cars %}
-        <tr{% if'Automatic' in car.transmission%} class="success" {% elif car.invalid %} class="error"{% endif %}>
+        <tr{% if car.invalid %} class="error" {% elif'Automatic' in car.transmission%} class="success" {% endif %}>
          <!--  <td><a href={{ car.dealer.key().name().replace('/new-inventory/index.htm?model=BRZ&', '') + car.link }}><img src={{ car.img_src }}></a></td> -->
           <td><a href={{ car.dealer.key().name().replace('/new-inventory/index.htm?model=BRZ&', '') + car.link }}>{{ car.vin }}</a></td>
           <td>{{ car.model }}</td>

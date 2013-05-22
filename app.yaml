@@ -1,5 +1,5 @@
 application: brz-scraps
-version: 2
+version: 2p
 runtime: python27
 api_version: 1
 threadsafe: yes
@@ -17,6 +17,10 @@ handlers:
   upload: favicon\.ico
 
 - url: /task/cars
+  script: main.app
+  login: admin
+
+- url: /users/edit
   script: main.app
   login: admin
 
