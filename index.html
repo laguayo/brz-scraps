@@ -16,14 +16,14 @@ Car List
         $('#car_table').dataTable( {
           "sDom": "<'row'<'span6'l><'span6'f>r>t<'row'<'span6'i><'span6'p>>",
           "sPaginationType": "bootstrap",
-          "aaSorting": [[ 3, "asc" ]]
+          "aaSorting": [[ 6, "desc" ]]
         } );
       } );   
   </script>
     {% endblock %}
     {% block content %}
  <div>
-  <div class="row"><div class="span9"> <p><small><strong>Highlights: </strong>Red &#8213; No Longer on available, Green &#8213; is Automatic Tranny</small> </p></div></div>
+ <!--  <div class="row"><div class="span9"> <p><small><strong>Highlights: </strong>Red &#8213; No Longer on available, Green &#8213; is Automatic Tranny</small> </p></div></div> -->
   <div class="row"><div class="span9"><p class="lead">Total Cars {{ cars | length }}</p></div></div>
       <table class="table table-striped table-bordered table-hover table-condensed dataTable" id="car_table">
         <thead>
@@ -36,11 +36,12 @@ Car List
           <th><a href="#">Color</a></th>
           <th><a href="#">Dealer</a></th>
           <th><a href="#">Date</a></th>
+          <th style="width: 1px;"><a href="#">Avail</a></th>
         </tr>
         </thead>
       <tbody role="alert" aria-live="polite"  aria-relevant="all">
       {% for car in cars %}
-        <tr{% if car.invalid %} class="error" {% elif'Automatic' in car.transmission%} class="success" {% endif %}>
+        <tr>
          <!--  <td><a href={{ car.dealer.key().name().replace('/new-inventory/index.htm?model=BRZ&', '') + car.link }}><img src={{ car.img_src }}></a></td> -->
           <td><a href={{ car.dealer.key().name().replace('/new-inventory/index.htm?model=BRZ&', '') + car.link }}>{{ car.vin }}</a></td>
           <td>{{ car.model }}</td>
@@ -49,6 +50,7 @@ Car List
           <td>{{ car.ex_color }}</td>
           <td>{{ car.dealer.key().name().replace('/new-inventory/index.htm?model=BRZ&', '') }}</td>
           <td style="font-size: 10px;">{{ car.local_date }}</td>
+          <td style="width: 1px; background-color:{% if car.invalid %} rgba(255, 159, 128, 0.9){% else %} rgba(164, 255, 128, 0.9){% endif %};"> {% if car.invalid %} No {% else %} Yes {% endif %}</td>
         </tr>
       {% endfor %}
       </tbody>

@@ -134,6 +134,7 @@ class ParseDealersTask(webapp2.RequestHandler):
 		if invalidate_full == True:
 			lim = len(dealer.cars) * 1000
 			old_keys = db.GqlQuery("SELECT __key__ FROM Car WHERE dealer = :1", dealer.key()).run(keys_only=True, limit=lim)
+			self.reverse_invalidate(old_keys)
 		else:
 			old_keys = set(dealer.cars)
 		new_keys = self.invalidate_old(car_set, old_keys)
@@ -208,3 +209,10 @@ class ParseDealersTask(webapp2.RequestHandler):
 				prStr = non_decimal.sub('', p.string)
 				return int(prStr)
 		return 0
+	def reverse_invalidate(self, keys):
+		for k in keys:
+			c = Car.get(k)
+			if c.invalid:
+				c.invalid = False
+				c.put()
+		return
