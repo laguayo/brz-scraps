@@ -72,8 +72,8 @@ class StoreDealers(webapp2.RequestHandler):
 			self.redirect('/dealer/list/1')
 class ParseDealer(webapp2.RequestHandler):
 	def get(self):
-		if self.request.get('full'):
-			taskqueue.add(queue_name='carparse', url='/dealer/parse/1', params = {'invalidate_full' : True})
+		if self.request.get('lvl'):
+			taskqueue.add(queue_name='carparse', url='/dealer/parse/1', params = {'lvl' : self.request.get('lvl')})
 		else:	
 			taskqueue.add(queue_name='carparse', url='/dealer/parse/1', params = {})
 		return
@@ -81,14 +81,14 @@ class ParseDealer(webapp2.RequestHandler):
 class ParseDealersTask(webapp2.RequestHandler):
 	#post will result in starting a task across all dealers
 	def post(self, empty):
-		if self.request.get('invalidate_full'):
-			invalidate_full = True
+		if self.request.get('lvl'):
+			lvl = int(self.request.get('lvl'))
 		else:
-			invalidate_full = False			
+			lvl = None
 		dealers = Dealer.all()
 		for dealer in dealers:
 			logging.info('Parsing Dealer: %s', dealer.name)
-			self.get_url(dealer.url, dealer, invalidate_full)
+			self.get_url(dealer.url, dealer, lvl)
 		return
 	#get will process one dealer in key based on dealer name
 	def get(self, name):
@@ -105,16 +105,20 @@ class ParseDealersTask(webapp2.RequestHandler):
 		return
 	def invalidate_old(self, cars, old_keys):
 		for k in set(old_keys):
+			logging.info("Checking key %s", k.name())
 			if k not in cars:
-				car = Car.get(k)
-				if car.invalid != True:
-					car.invalid = True
-					logging.info("Invalidated car %s", car.key())
-					car.put()
+				self.invalidate(k)
 			else:
 				cars.remove(k)
 		return list(cars)
-	def get_url(self, url, dealer, invalidate_full):
+	def invalidate(self, k):
+		car = Car.get(k)
+		if car.invalid == None or car.invalid == False:
+					car.invalid = True
+					logging.info("Invalidated car %s", car.key())
+					car.put()
+		return
+	def get_url(self, url, dealer, lvl):
 		logging.info('Getting url: %s',url)
 		if 'BRZ' not in url:
 			brz_url = url + StoreDealers.inventoryString + StoreDealers.modelParam
@@ -131,16 +135,19 @@ class ParseDealersTask(webapp2.RequestHandler):
 		except urllib2.URLError, e:
 			 logging.error(e)
 			 old_keys = set()
-		if invalidate_full == True:
+		if lvl or len(car_set) == 0:
 			lim = len(dealer.cars) * 1000
-			old_keys = db.GqlQuery("SELECT __key__ FROM Car WHERE dealer = :1", dealer.key()).run(keys_only=True, limit=lim)
-			self.reverse_invalidate(old_keys)
+			if lvl >= 1 or len(car_set) == 0:
+				old_keys = db.GqlQuery("SELECT __key__ FROM Car WHERE dealer = :1", dealer.key()).run(keys_only=True, limit=lim)
+			if lvl >= 2:
+				self.reverse_invalidate(old_keys)
 		else:
 			old_keys = set(dealer.cars)
 		new_keys = self.invalidate_old(car_set, old_keys)
 		if len(new_keys) > 0:
-			logging.info("Saving New Keys %s", new_keys)
-			dealer.cars 
+			all_cars = set(dealer.cars).union(set(new_keys))
+			logging.info("Saving Dealer Car Keys %s", all_cars)
+			dealer.cars = list(all_cars)
 			dealer.put()
 		return
 	def parse_car(self, car_str, url):
@@ -210,6 +217,7 @@ class ParseDealersTask(webapp2.RequestHandler):
 				return int(prStr)
 		return 0
 	def reverse_invalidate(self, keys):
+		logging.info("Reverse Invalidating")
 		for k in keys:
 			c = Car.get(k)
 			if c.invalid:
